@@ -11,7 +11,7 @@ An MCP (Model Context Protocol) server that provides Waze travel time calculatio
 ## Installation
 
 ```bash
-npm install
+npm ci
 python3 -m pip install -r python/requirements.txt
 npm run build
 ```
