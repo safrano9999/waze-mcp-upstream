@@ -1,3 +1,6 @@
+import { execFile } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import type {
   Region,
   VehicleType,
@@ -41,11 +44,28 @@ const DEFAULT_HEADERS = {
   Referer: "https://www.waze.com/",
 };
 
+const execFileAsync = promisify(execFile);
+const fallbackScript = fileURLToPath(new URL("../python/curl_fallback.py", import.meta.url));
+
 export class WazeClient {
   private async fetch<T>(url: string): Promise<T> {
     const response = await fetch(url, {
       headers: DEFAULT_HEADERS,
+      signal: AbortSignal.timeout(20_000),
     });
+
+    if (response.status === 403) {
+      await response.body?.cancel();
+      const { stdout } = await execFileAsync("python3", [fallbackScript, url], {
+        timeout: 25_000,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      const fallback = JSON.parse(stdout);
+      if (fallback.status < 200 || fallback.status >= 300) {
+        throw new Error(`Waze fallback error: ${fallback.status} ${fallback.statusText}`);
+      }
+      return fallback.data as T;
+    }
 
     if (!response.ok) {
       throw new Error(`Waze API error: ${response.status} ${response.statusText}`);

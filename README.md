@@ -12,8 +12,20 @@ An MCP (Model Context Protocol) server that provides Waze travel time calculatio
 
 ```bash
 npm install
+python3 -m pip install -r python/requirements.txt
 npm run build
 ```
+
+This fork keeps the original tools and adds a fallback for Waze's HTTP 403
+responses. It requires Python 3.15 and uses a fresh `curl_cffi` Chrome session
+for each fallback request. Address lookups use Waze's current autocomplete
+endpoint while preserving the existing tool result fields. No account,
+API key, database, browser process or persistent volume is needed.
+
+The fallback approach follows [Home Assistant #183923](https://github.com/home-assistant/core/pull/183923)
+and [#184663](https://github.com/home-assistant/core/pull/184663), adapted to
+this TypeScript MCP server. Runtime dependencies are pinned in
+`python/requirements.txt` and `package-lock.json`.
 
 ## Usage with Claude Desktop
 
